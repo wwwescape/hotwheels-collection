@@ -1,0 +1,44 @@
+version: '3'
+services:
+  hotwheels-mongo:
+    image: mongo:4.4.18
+    container_name: hotwheels-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+  hotwheels-backend:
+    build: ./backend
+    image: wwwescape/hotwheels-backend:latest
+    container_name: hotwheels-backend
+    environment:
+      - MONGO_URI=mongodb://hotwheels-mongo:27017/hotwheels
+      - PORT=2105
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - hotwheels-mongo
+  hotwheels-frontend:
+    build: ./frontend
+    image: wwwescape/hotwheels-frontend:latest
+    container_name: hotwheels-frontend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - PORT=1602
+      - REACT_APP_API_URL=
+    depends_on:
+      - hotwheels-backend
+  hotwheels-nginx:
+    image: nginx:latest
+    container_name: hotwheels-nginx
+    ports:
+      - "1602:1602"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - uploads:/app/uploads
+    depends_on:
+      - hotwheels-backend
+      - hotwheels-frontend
+volumes:
+  mongo-data:
+  uploads:
